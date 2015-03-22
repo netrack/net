@@ -1,37 +1,18 @@
-package pkg
+package l3
 
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"net"
 
 	"github.com/netrack/net/encoding/binary"
+	"github.com/netrack/net/iana"
 )
 
 const (
-	IPv4Version   uint8 = 0x4
-	IPv4HeaderLen uint8 = 0x5
-)
-
-const (
-	IPV4_PROTO_HOPOPT IPv4Proto = iota
-	IPV4_PROTO_ICMP
-	IPV4_PROTO_IGMP
-	IPV4_PROTO_GGP
-	IPV4_PROTO_IP_IN_IP
-	IPV4_PROTO_ST
-	IPV4_PROTO_TCP
-	IPV4_PROTO_CBT
-	IPV4_PROTO_EGP
-	IPV4_PROTO_IGP
-	IPV4_PROTO_BBN_RCC_MON
-	IPV4_PROTO_NVP_II
-	IPV4_PROTO_PUP
-	IPV4_PROTO_ARGUS
-	IPV4_PROTO_EMCON
-	IPV4_PROTO_XNET
-	IPV4_PROTO_CHAOS
-	IPV4_PROTO_UDP
+	IPv4Version   uint8  = 0x4
+	IPv4HeaderLen uint16 = 0x14
 )
 
 type IPv4Proto uint8
@@ -50,27 +31,34 @@ type IPv4 struct {
 	Flags      IPv4Flag
 	FragOffset uint16
 	TTL        uint8
-	Proto      IPv4Proto
+	Proto      iana.IPProto
 	Checksum   uint16
 	Src        net.IP
 	Dst        net.IP
+	Payload    io.Reader
 }
 
 func (h *IPv4) WriteTo(w io.Writer) (int64, error) {
 	var flagOffset uint16 = (uint16(h.Flags) << 0xd) | (h.FragOffset & 0x1ffd)
 	var buf bytes.Buffer
 
+	payload, err := ioutil.ReadAll(h.Payload)
+	if err != nil {
+		return 0, err
+	}
+
 	n, err := binary.WriteSlice(&buf, binary.BigEndian, []interface{}{
-		(IPv4Version<<4 | IPv4HeaderLen),
+		(IPv4Version<<4 | uint8(IPv4HeaderLen/4)),
 		h.DiffServ,
-		h.Len,
+		uint16(len(payload)) + uint16(IPv4HeaderLen),
 		h.ID,
 		flagOffset,
-		h.TTL,
+		uint8(255),
 		h.Proto,
 		uint16(0),
 		h.Src,
 		h.Dst,
+		payload,
 	})
 
 	if err != nil {
@@ -78,7 +66,8 @@ func (h *IPv4) WriteTo(w io.Writer) (int64, error) {
 	}
 
 	b := buf.Bytes()
-	copy(b[10:12], Checksum(b))
+	copy(b[10:12], iana.Checksum(b[:IPv4HeaderLen]))
+
 	return binary.Write(w, binary.BigEndian, b)
 }
 

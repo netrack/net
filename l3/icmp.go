@@ -1,9 +1,11 @@
-package pkg
+package l3
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/netrack/net/encoding/binary"
+	"github.com/netrack/net/iana"
 )
 
 const ICMPHeaderLen = 0x8
@@ -128,19 +130,30 @@ func (p *ICMP) ReadFrom(r io.Reader) (int64, error) {
 }
 
 type ICMPEcho struct {
+	ICMP
 	ID   uint16
 	Seq  uint16
 	Data []byte
 }
 
 func (p *ICMPEcho) WriteTo(w io.Writer) (int64, error) {
-	return binary.WriteSlice(w, binary.BigEndian, []interface{}{
-		p.ID, p.Seq, p.Data,
+	var buf bytes.Buffer
+
+	n, err := binary.WriteSlice(&buf, binary.BigEndian, []interface{}{
+		p.ICMP, p.ID, p.Seq, p.Data,
 	})
+
+	if err != nil {
+		return n, err
+	}
+
+	b := buf.Bytes()
+	copy(b[2:4], iana.Checksum(b))
+	return binary.Write(w, binary.BigEndian, b)
 }
 
 func (p *ICMPEcho) ReadFrom(r io.Reader) (int64, error) {
 	return binary.ReadSlice(r, binary.BigEndian, []interface{}{
-		&p.ID, &p.Seq, &p.Data,
+		&p.ICMP, &p.ID, &p.Seq, &p.Data,
 	})
 }

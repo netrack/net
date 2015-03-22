@@ -1,10 +1,11 @@
-package pkg
+package l3
 
 import (
 	"io"
 	"net"
 
 	"github.com/netrack/net/encoding/binary"
+	"github.com/netrack/net/iana"
 )
 
 const (
@@ -15,7 +16,7 @@ const (
 	ARPT_CHAOS
 	ARPT_IEEE_802
 	ARPT_ARCNET
-	ARPT_HYPERCHANNEL
+	ARPT_HYPER_CHANNEL
 	ARPT_LANSTAR
 	ARPT_AUTONET
 	ARPT_LOCAL_TALK
@@ -36,7 +37,7 @@ type ARPOperation uint16
 
 type ARP struct {
 	HWType    ARPType
-	ProtoType ProtoType
+	ProtoType iana.EthType
 	Operation ARPOperation
 	HWSrc     net.HardwareAddr
 	ProtoSrc  net.IP

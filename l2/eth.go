@@ -1,16 +1,17 @@
-package pkg
+package l2
 
 import (
 	"io"
 	"net"
 
 	"github.com/netrack/net/encoding/binary"
+	"github.com/netrack/net/iana"
 )
 
 type EthernetII struct {
-	HWDst     net.HardwareAddr
-	HWSrc     net.HardwareAddr
-	EtherType ProtoType
+	HWDst   net.HardwareAddr
+	HWSrc   net.HardwareAddr
+	EthType iana.EthType
 }
 
 func (eth *EthernetII) init() {
@@ -26,21 +27,21 @@ func (eth *EthernetII) init() {
 func (eth *EthernetII) ReadFrom(r io.Reader) (int64, error) {
 	eth.init()
 	return binary.ReadSlice(r, binary.BigEndian, []interface{}{
-		&eth.HWDst, &eth.HWSrc, &eth.EtherType,
+		&eth.HWDst, &eth.HWSrc, &eth.EthType,
 	})
 }
 
 func (eth *EthernetII) WriteTo(w io.Writer) (int64, error) {
 	return binary.WriteSlice(w, binary.BigEndian, []interface{}{
-		eth.HWDst, eth.HWSrc, eth.EtherType,
+		eth.HWDst, eth.HWSrc, eth.EthType,
 	})
 }
 
 type Ethernet8021q struct {
-	HWDst     net.HardwareAddr
-	HWSrc     net.HardwareAddr
-	VLAN      VLAN
-	EtherType ProtoType
+	HWDst   net.HardwareAddr
+	HWSrc   net.HardwareAddr
+	VLAN    VLAN
+	EthType iana.EthType
 }
 
 func (eth *Ethernet8021q) init() {
@@ -56,13 +57,13 @@ func (eth *Ethernet8021q) init() {
 func (eth *Ethernet8021q) ReadFrom(r io.Reader) (int64, error) {
 	eth.init()
 	return binary.ReadSlice(r, binary.BigEndian, []interface{}{
-		&eth.HWDst, &eth.HWSrc, &eth.VLAN, &eth.EtherType,
+		&eth.HWDst, &eth.HWSrc, &eth.VLAN, &eth.EthType,
 	})
 }
 
 func (eth *Ethernet8021q) WriteTo(w io.Writer) (int64, error) {
 	return binary.WriteSlice(w, binary.BigEndian, []interface{}{
-		eth.HWDst, eth.HWSrc, eth.VLAN, eth.EtherType,
+		eth.HWDst, eth.HWSrc, eth.VLAN, eth.EthType,
 	})
 }
 
