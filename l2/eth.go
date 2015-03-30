@@ -8,6 +8,11 @@ import (
 	"github.com/netrack/net/iana"
 )
 
+var (
+	HWBcast  = []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	HWUnspec = []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+)
+
 type EthernetII struct {
 	HWDst   net.HardwareAddr
 	HWSrc   net.HardwareAddr
