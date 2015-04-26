@@ -81,6 +81,8 @@ func (a *ARP) ReadFrom(r io.Reader) (n int64, err error) {
 }
 
 func (a *ARP) WriteTo(w io.Writer) (n int64, err error) {
+	a.init()
+
 	return binary.WriteSlice(w, binary.BigEndian, []interface{}{
 		a.HWType,
 		a.ProtoType,
